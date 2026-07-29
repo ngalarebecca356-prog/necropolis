@@ -1,0 +1,5 @@
+[phases.setup]
+nixPkgs = ["gdal"]
+
+[start]
+cmd = "gunicorn cimetiere.wsgi --bind 0.0.0.0:$PORT"

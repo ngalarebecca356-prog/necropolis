@@ -1,0 +1,14 @@
+# Fichiers de sécurité et secrets
+.env
+
+# Fichiers Python générés automatiquement
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Base de données locale (si tu utilises SQLite)
+db.sqlite3
+
+# Fichiers de configuration VS Code
+.vscode/
