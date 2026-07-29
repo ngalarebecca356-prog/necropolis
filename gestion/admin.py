@@ -10,7 +10,7 @@ class CimetiereAdmin(admin.ModelAdmin):
 
 @admin.register(Caveau)
 class CaveauAdmin(admin.ModelAdmin):
-    list_display = ('numero', 'section', 'bloc', 'statut', 'localisation')
+    list_display = ('id', 'numero', 'emplacement', 'statut')
     list_filter = ('statut', 'section', 'bloc')
     search_fields = ('numero', 'localisation')
 
