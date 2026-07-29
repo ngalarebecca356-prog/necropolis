@@ -158,7 +158,9 @@ CORS_ALLOW_CREDENTIALS = True
 # Et dans MIDDLEWARE, ajouter 'corsheaders.middleware.CorsMiddleware' en PREMIER
 
 import dj_database_url
-# Si Render fournit une base de données, on l'utilise. Sinon, on garde SQLite.
+import os
+
+# Configuration pour Render (Production)
 if 'DATABASE_URL' in os.environ:
     DATABASES = {
         'default': dj_database_url.config(
@@ -166,3 +168,17 @@ if 'DATABASE_URL' in os.environ:
             ssl_require=True
         )
     }
+    # 🚨 AJOUT CRUCIAL : Forcer le moteur PostGIS pour les champs géographiques
+    DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
+else:
+    # Configuration locale (Développement)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
+# Fichiers statiques
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
