@@ -2,12 +2,7 @@ import os
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-
-# Gestion flexible de la base de données (SQLite standard ou PostGIS)
-if os.environ.get('USE_SQLITE'):
-    from django.db import models
-else:
-    from django.contrib.gis.db import models
+from django.db import models  # <-- Import standard compatible Render et SQLite
 
 
 # ═══════════════════════════════════════════════════
@@ -74,17 +69,15 @@ class Caveau(models.Model):
     section = models.CharField(max_length=10)
     bloc = models.CharField(max_length=10)
     
-    # Champs ajoutés pour la gestion des prix et types
     type_caveau = models.CharField(max_length=20, choices=TYPE_CAVEAU_CHOICES, default='simple')
-    
-    # Utilisation de la constante globale définie plus haut
     statut = models.CharField(max_length=20, choices=STATUT_CAVEAU_CHOICES, default='disponible')
     
     cimetiere = models.ForeignKey(Cimetiere, on_delete=models.CASCADE, related_name='caveaux')
     
-    # Champ de localisation (uniquement si PostGIS est utilisé, sinon ignoré en SQLite)
-    if not os.environ.get('USE_SQLITE'):
-        localisation = models.PointField(null=True, blank=True)
+    # MODIFICATION CLÉ : Champ texte standard compatible Render.
+    # Il stockera les coordonnées au format "latitude,longitude" (ex: "-4.269, 15.266")
+    # Ton interface pourra lire ce texte, le séparer et afficher la carte normalement.
+    localisation = models.CharField(max_length=100, null=True, blank=True, verbose_name="Coordonnées (ex: -4.269, 15.266)")
 
     def __str__(self):
         return f"Caveau {self.numero} - {self.statut}"
@@ -113,18 +106,15 @@ class Reservation(models.Model):
     client = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reservations')
     defunt = models.OneToOneField(Defunt, on_delete=models.CASCADE, null=True, blank=True)
     
-    # Infos du client (si réservation faite par admin pour un tiers)
     client_nom = models.CharField(max_length=100, blank=True, null=True)
     client_prenom = models.CharField(max_length=100, blank=True, null=True)
     client_email = models.EmailField(blank=True, null=True)
     client_telephone = models.CharField(max_length=20, blank=True, null=True)
     
-    # Traçabilité
     cree_par = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='reservations_creees')
     valide_par = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='reservations_validees')
     date_validation = models.DateTimeField(null=True, blank=True)
     
-    # Type de caveau et Montant (MIS À JOUR À 750 000 FCFA)
     type_caveau = models.CharField(max_length=20, default='simple')
     montant_total = models.DecimalField(max_digits=12, decimal_places=0, default=750000)
     montant_paye = models.DecimalField(max_digits=12, decimal_places=0, default=0)
@@ -160,9 +150,9 @@ class Concession(models.Model):
 
 class Exhumation(models.Model):
     STATUT_CHOICES = [
-        ('en_attente', 'En attente'),   # ✅ Corrigé
+        ('en_attente', 'En attente'),
         ('validee', 'Validée'),
-        ('realisee', 'Réalisée'),       # ✅ Corrigé
+        ('realisee', 'Réalisée'),
         ('refusee', 'Refusée'),
     ]
     caveau = models.ForeignKey(Caveau, on_delete=models.CASCADE)
@@ -175,7 +165,7 @@ class Exhumation(models.Model):
     statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='en_attente')
     date_demande = models.DateTimeField(auto_now_add=True)
     date_validation = models.DateTimeField(null=True, blank=True)
-    date_realisation = models.DateTimeField(null=True, blank=True) # ✅ Ajouté pour le PV
+    date_realisation = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"Exhumation {self.id} - {self.statut}"
@@ -201,7 +191,6 @@ class Profil(models.Model):
     )
     nom = models.CharField(max_length=100, blank=True, default="")
     prenom = models.CharField(max_length=100, blank=True, default="")
-    # NOUVEAUX CHAMPS :
     telephone = models.CharField(max_length=20, blank=True, default="")
     photo = models.CharField(max_length=255, blank=True, default="")
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='client')
@@ -260,6 +249,7 @@ class CodeInvitation(models.Model):
 def creer_profil_auto(sender, instance, created, **kwargs):
     if created:
         Profil.objects.create(user=instance)
+
 
 class Transaction(models.Model):
     """Historique de chaque paiement (pour les paiements partiels)"""
