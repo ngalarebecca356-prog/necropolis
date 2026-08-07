@@ -41,6 +41,7 @@ if ON_RAILWAY:
         'allauth',
         'allauth.account',
         'allauth.mfa',
+        'whitenoise.runserver_nostatic'
     ]
     DATABASES = {
         'default': {
@@ -79,6 +80,7 @@ else:
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -182,3 +184,4 @@ else:
 # Fichiers statiques
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
